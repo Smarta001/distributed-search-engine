@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: search-postgres
+
+    environment:
+      POSTGRES_USER: search
+      POSTGRES_PASSWORD: search123
+      POSTGRES_DB: distributed_search
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  crawler:
+    build:
+      context: ../crawler
+
+    container_name: crawler
+
+    depends_on:
+      - postgres
+      - rabbitmq
+
+volumes:
+  postgres-data:
