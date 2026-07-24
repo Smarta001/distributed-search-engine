@@ -83,6 +83,15 @@ services:
       - RABBITMQ_PASSWORD=guest
       - ELASTICSEARCH_URL=http://elasticsearch:9200
 
+  # ---------------------------------------------------------
+  # 6. Redis: Caches popular search results
+  # ---------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
 # ---------------------------------------------------------
 # Persistent Volumes
 # ---------------------------------------------------------
