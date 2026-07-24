@@ -3,15 +3,13 @@ database.py
 PostgreSQL integration for the crawler.
 
 Responsibilities:
-- Connect to PostgreSQL
+- Connect to PostgreSQL (with retry logic)
 - Create the pages table if it doesn't exist
 - Save a crawled page's data
 - Retrieve a page by URL
-
-Uses config.py for connection details (POSTGRES_HOST, POSTGRES_DB, etc.)
-so the same code works locally and inside Docker/Kubernetes.
 """
 
+import time
 import psycopg2
 import psycopg2.extras
 
@@ -47,16 +45,24 @@ SELECT_PAGE_SQL = "SELECT * FROM pages WHERE url = %s;"
 
 def connect():
     """
-    Open a new connection to PostgreSQL using settings from config.py.
-    Caller is responsible for closing it (or use it as a context manager).
+    Open a new connection to PostgreSQL using settings from config.py,
+    with a retry loop for startup delays.
     """
-    return psycopg2.connect(
-        host=config.POSTGRES_HOST,
-        port=config.POSTGRES_PORT,
-        dbname=config.POSTGRES_DB,
-        user=config.POSTGRES_USER,
-        password=config.POSTGRES_PASSWORD,
-    )
+    max_retries = 10
+    for attempt in range(max_retries):
+        try:
+            return psycopg2.connect(
+                host=config.POSTGRES_HOST,
+                port=config.POSTGRES_PORT,
+                dbname=config.POSTGRES_DB,
+                user=config.POSTGRES_USER,
+                password=config.POSTGRES_PASSWORD,
+            )
+        except psycopg2.OperationalError:
+            print(f"PostgreSQL not ready. Retrying in 5s (Attempt {attempt + 1}/{max_retries})")
+            time.sleep(5)
+            
+    raise Exception("Could not connect to PostgreSQL after multiple retries.")
 
 
 def init_db(conn=None):
@@ -79,9 +85,7 @@ def init_db(conn=None):
 
 def save_page(url, title=None, meta_description=None, html=None, status_code=None, conn=None):
     """
-    Insert a crawled page, or update it if the URL already exists
-    (so re-crawling a page refreshes its data instead of erroring out).
-
+    Insert a crawled page, or update it if the URL already exists.
     Returns the row's id.
     """
     own_conn = conn is None
@@ -127,9 +131,6 @@ def get_page(url, conn=None):
 
 
 if __name__ == "__main__":
-    # Quick manual test: python database.py
-    # Requires PostgreSQL to actually be running and reachable
-    # using the settings in config.py (POSTGRES_HOST, etc.)
     print("Connecting to:", config.POSTGRES_HOST, config.POSTGRES_PORT, config.POSTGRES_DB)
 
     init_db()

@@ -7,7 +7,9 @@ and provides a simple method to index an IndexDocument.
 
 from __future__ import annotations
 
+import time
 from elasticsearch import Elasticsearch, NotFoundError
+from elastic_transport import ConnectionError
 
 from shared.config import get_settings
 from shared.constants import PAGES_INDEX
@@ -64,12 +66,21 @@ class ESClient:
         self._client = Elasticsearch(settings.elasticsearch_url)
 
     def ensure_index(self) -> None:
-        try:
-            self._client.indices.get(index=PAGES_INDEX)
-            logger.info("Index '%s' already exists", PAGES_INDEX)
-        except NotFoundError:
-            logger.info("Creating index '%s'", PAGES_INDEX)
-            self._client.indices.create(index=PAGES_INDEX, body=INDEX_SETTINGS)
+        max_retries = 10
+        for attempt in range(max_retries):
+            try:
+                self._client.indices.get(index=PAGES_INDEX)
+                logger.info("Index '%s' already exists", PAGES_INDEX)
+                return
+            except NotFoundError:
+                logger.info("Creating index '%s'", PAGES_INDEX)
+                self._client.indices.create(index=PAGES_INDEX, body=INDEX_SETTINGS)
+                return
+            except ConnectionError:
+                logger.warning("Elasticsearch not ready. Retrying in 5s (Attempt %d/%d)", attempt + 1, max_retries)
+                time.sleep(5)
+                
+        raise Exception("Could not connect to Elasticsearch after multiple retries.")
 
     def index_document(self, doc: IndexDocument) -> None:
         """Upserts by content_hash, so re-indexing unchanged pages is a no-op-ish overwrite."""

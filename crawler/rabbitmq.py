@@ -3,16 +3,14 @@ rabbitmq.py
 RabbitMQ Producer for the crawler.
 
 Responsibilities:
-- Connect to RabbitMQ
+- Connect to RabbitMQ (with retry logic)
 - Publish a message for each successfully crawled page
-
-The indexer service (a separate component, not part of your crawler
-module) will later consume these messages from the queue and build
-the search index.
 """
 
 import json
+import time
 import pika
+import hashlib
 
 import config
 
@@ -20,7 +18,7 @@ import config
 def _get_connection():
     """
     Open a new blocking connection to RabbitMQ using settings from
-    config.py.
+    config.py, with a retry loop for startup delays.
     """
     credentials = pika.PlainCredentials(config.RABBITMQ_USER, config.RABBITMQ_PASSWORD)
     parameters = pika.ConnectionParameters(
@@ -28,36 +26,55 @@ def _get_connection():
         port=config.RABBITMQ_PORT,
         credentials=credentials,
     )
-    return pika.BlockingConnection(parameters)
+    
+    max_retries = 10
+    for attempt in range(max_retries):
+        try:
+            return pika.BlockingConnection(parameters)
+        except pika.exceptions.AMQPConnectionError:
+            print(f"RabbitMQ not ready. Retrying in 5s (Attempt {attempt + 1}/{max_retries})")
+            time.sleep(5)
+            
+    raise Exception("Could not connect to RabbitMQ after multiple retries.")
 
 
 class RabbitMQPublisher:
     """
     Wraps a single connection/channel so main.py (or worker threads)
     can publish repeatedly without reconnecting for every page.
-
-    Note: a single pika BlockingConnection is NOT thread-safe. If you
-    use multiple worker threads (Milestone 2), create one
-    RabbitMQPublisher per thread rather than sharing one instance.
     """
 
     def __init__(self):
         self.connection = _get_connection()
         self.channel = self.connection.channel()
+        
+        # Fully match the Indexer's Dead-Letter Exchange and Routing Key configuration
+        queue_arguments = {
+            "x-dead-letter-exchange": "crawl_dlx",
+            "x-dead-letter-routing-key": "crawl_results_dlq"
+        }
+        
         # durable=True so the queue survives a RabbitMQ restart
-        self.channel.queue_declare(queue=config.RABBITMQ_QUEUE, durable=True)
+        self.channel.queue_declare(
+            queue=config.RABBITMQ_QUEUE, 
+            durable=True,
+            arguments=queue_arguments
+        )
 
-    def publish_page(self, url, title=None, status_code=None):
+    def publish_page(self, url, title=None, status_code=None, html=""):
         """
         Publish a message announcing a page has been crawled and saved.
-        Kept intentionally small (url/title/status) — the indexer can
-        fetch the full record from PostgreSQL via the URL if it needs
-        the full HTML/metadata.
+        Includes full HTML and a content hash to satisfy the Indexer's Pydantic schema.
         """
+        content_hash = hashlib.sha256(html.encode("utf-8")).hexdigest() if html else ""
+        
         message = {
             "url": url,
+            "final_url": url,
             "title": title,
-            "status": status_code,
+            "status_code": status_code,
+            "html": html,
+            "content_hash": content_hash
         }
 
         self.channel.basic_publish(
@@ -83,9 +100,6 @@ class RabbitMQPublisher:
 
 
 if __name__ == "__main__":
-    # Quick manual test: python rabbitmq.py
-    # Requires RabbitMQ to actually be running and reachable using the
-    # settings in config.py (RABBITMQ_HOST, etc.)
     print("Connecting to RabbitMQ at:", config.RABBITMQ_HOST, config.RABBITMQ_PORT)
 
     with RabbitMQPublisher() as publisher:
@@ -93,11 +107,6 @@ if __name__ == "__main__":
             url="https://example.com",
             title="Example Domain",
             status_code=200,
+            html="<html><body><h1>Test</h1></body></html>"
         )
         print(f"Published test message to queue '{config.RABBITMQ_QUEUE}'")
-
-      #Notes:RabbitMQPublisher wraps the connection so you don't reconnect for every single page — create one instance and reuse it across the crawl.
-#Supports with RabbitMQPublisher() as pub: for automatic cleanup.
-#Messages are kept small (url/title/status) since the indexer can pull full page data from PostgreSQL via the URL — no need to duplicate the whole HTML into the queue.
-#delivery_mode=2 + durable=True on the queue means messages survive a RabbitMQ restart, so you don't lose crawled pages if the broker restarts mid-run.
-# Note in the docstring: a single connection isn't thread-safe — once you get to Milestone 2 (multithreading), give each worker thread its own RabbitMQPublisher instance rather than sharing one.
