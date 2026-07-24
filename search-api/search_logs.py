@@ -12,7 +12,6 @@ from __future__ import annotations
 import psycopg2
 import psycopg2.extras
 
-from shared.config import get_settings
 from shared.logger import get_logger
 
 logger = get_logger(__name__)
@@ -43,8 +42,8 @@ LIMIT %(limit)s;
 
 
 def _connect():
-    settings = get_settings()
-    return psycopg2.connect(settings.postgres_dsn)
+    dsn = "postgresql://search:search123@localhost:5432/distributed_search"
+    return psycopg2.connect(dsn)
 
 
 def init_search_logs_table() -> None:
