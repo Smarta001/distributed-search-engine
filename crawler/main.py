@@ -5,9 +5,6 @@ actual crawl loop:
 
     seed URLs -> scheduler -> robots check -> download -> parse
     -> save to database -> publish to RabbitMQ -> queue new links -> repeat
-
-This is the single-threaded version (Milestone 1). Multithreading
-(Milestone 2) will wrap this same per-URL logic in worker threads.
 """
 
 import time
@@ -23,11 +20,7 @@ import rabbitmq
 
 def crawl_url(url, scheduler, robots_checker, publisher):
     """
-    Process a single URL end-to-end:
-    robots check -> download -> parse -> save -> publish -> enqueue links.
-
-    Returns True if the page was successfully crawled and saved,
-    False otherwise (blocked by robots.txt, download failed, etc.)
+    Process a single URL end-to-end.
     """
     if not robots_checker.can_fetch(url):
         print(f"[SKIP - robots.txt disallows] {url}")
@@ -52,6 +45,7 @@ def crawl_url(url, scheduler, robots_checker, publisher):
         url=url,
         title=parsed["title"],
         status_code=result.status_code,
+        html=result.html
     )
 
     print(f"[OK - {result.status_code}] {url} — {parsed['title']}")
