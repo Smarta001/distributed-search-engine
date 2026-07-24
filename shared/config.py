@@ -24,8 +24,14 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str = "redis://localhost:6379/0"
 
-    # PostgreSQL
-    postgres_dsn: str = "postgresql://postgres:postgres@localhost:5432/search_engine"
+    # PostgreSQL — field names deliberately match crawler/config.py exactly
+    # (POSTGRES_HOST, POSTGRES_PORT, etc.) so both services can share one
+    # .env / docker-compose environment block without translation.
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+    postgres_db: str = "search_engine"
+    postgres_user: str = "postgres"
+    postgres_password: str = "postgres"
 
     # Service-level
     log_level: str = "INFO"
@@ -36,6 +42,13 @@ class Settings(BaseSettings):
         return (
             f"amqp://{self.rabbitmq_user}:{self.rabbitmq_password}"
             f"@{self.rabbitmq_host}:{self.rabbitmq_port}/"
+        )
+
+    @property
+    def postgres_dsn(self) -> str:
+        return (
+            f"postgresql://{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
 
 
