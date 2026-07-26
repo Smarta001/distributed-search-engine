@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # ---------------------------------------------------------
   # 1. PostgreSQL: Stores crawled HTML and metadata
@@ -23,7 +25,7 @@ services:
     container_name: rabbitmq
     ports:
       - "5672:5672"
-      - "15672:15672" # Management UI
+      - "15672:15672"
 
   # ---------------------------------------------------------
   # 3. Elasticsearch: Stores the BM25-searchable index
@@ -45,24 +47,26 @@ services:
   # ---------------------------------------------------------
   crawler:
     build:
-      context: ../crawler
+      context: ..
+      dockerfile: crawler/Dockerfile
     container_name: crawler
     restart: on-failure
     depends_on:
       - postgres
       - rabbitmq
     environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=search
-      - POSTGRES_PASSWORD=search123
-      - POSTGRES_DB=distributed_search
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_QUEUE=crawl_results_queue
-      - SEED_URLS=https://example.com
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: search
+      POSTGRES_PASSWORD: search123
+      POSTGRES_DB: distributed_search
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_QUEUE: crawl_results_queue
+      SEED_URLS: https://en.wikipedia.org/wiki/Main_Page,https://news.ycombinator.com/,https://www.bbc.com/news,https://github.com/trending,https://www.geeksforgeeks.org/,https://stackoverflow.com/,https://techcrunch.com/
+      MAX_PAGES: 500
 
   # ---------------------------------------------------------
   # 5. Indexer: Consumes RabbitMQ messages and populates ES
@@ -77,11 +81,11 @@ services:
       - elasticsearch
     restart: on-failure
     environment:
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      ELASTICSEARCH_URL: http://elasticsearch:9200
 
   # ---------------------------------------------------------
   # 6. Redis: Caches popular search results

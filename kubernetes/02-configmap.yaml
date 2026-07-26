@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: search-engine-config
+  namespace: search-engine
+data:
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: distributed_search
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_QUEUE: crawl_results_queue
+  ELASTICSEARCH_URL: http://elasticsearch:9200
+  REDIS_URL: redis://redis:6379/0
+  SEED_URLS: https://example.com

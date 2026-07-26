@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-api
+  namespace: search-engine
+spec:
+  replicas: 2   # stateless FastAPI service, safe to run multiple copies
+  selector:
+    matchLabels:
+      app: search-api
+  template:
+    metadata:
+      labels:
+        app: search-api
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: search-api
+          image: search-api:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: search-engine-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: search-engine-secrets
+                  key: POSTGRES_PASSWORD
+            - name: ELASTICSEARCH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: ELASTICSEARCH_URL
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: REDIS_URL
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: search-api
+  namespace: search-engine
+spec:
+  type: NodePort
+  selector:
+    app: search-api
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30080

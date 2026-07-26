@@ -9,6 +9,7 @@ Table shape matches the README's "Search Logs" spec:
 
 from __future__ import annotations
 
+import os
 import psycopg2
 import psycopg2.extras
 
@@ -42,7 +43,13 @@ LIMIT %(limit)s;
 
 
 def _connect():
-    dsn = "postgresql://search:search123@localhost:5432/distributed_search"
+    host = os.environ.get("POSTGRES_HOST", "localhost")
+    port = os.environ.get("POSTGRES_PORT", "5432")
+    user = os.environ.get("POSTGRES_USER", "search")
+    password = os.environ.get("POSTGRES_PASSWORD", "search123")
+    db = os.environ.get("POSTGRES_DB", "distributed_search")
+    
+    dsn = f"postgresql://{user}:{password}@{host}:{port}/{db}"
     return psycopg2.connect(dsn)
 
 

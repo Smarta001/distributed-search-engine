@@ -1,0 +1,91 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: crawler
+  namespace: search-engine
+
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+
+  template:
+    metadata:
+      labels:
+        app: crawler
+
+    spec:
+      enableServiceLinks: false
+      restartPolicy: Never
+
+      containers:
+        - name: crawler
+          image: crawler:latest
+          imagePullPolicy: Never
+
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: POSTGRES_HOST
+
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: POSTGRES_PORT
+
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: POSTGRES_DB
+
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: search-engine-secrets
+                  key: POSTGRES_USER
+
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: search-engine-secrets
+                  key: POSTGRES_PASSWORD
+
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: RABBITMQ_HOST
+
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: RABBITMQ_PORT
+
+            - name: RABBITMQ_QUEUE
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: RABBITMQ_QUEUE
+
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef:
+                  name: search-engine-secrets
+                  key: RABBITMQ_USER
+
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: search-engine-secrets
+                  key: RABBITMQ_PASSWORD
+
+            - name: SEED_URLS
+              valueFrom:
+                configMapKeyRef:
+                  name: search-engine-config
+                  key: SEED_URLS

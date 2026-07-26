@@ -4,7 +4,6 @@ Centralized configuration for the crawler module.
 
 All values can be overridden via environment variables, which lets the
 same code run both on your local machine and inside Docker/Kubernetes
-(where you'll set env vars in docker-compose.yml or the deployment YAML)
 without editing this file.
 """
 
@@ -42,7 +41,7 @@ RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE", "crawled_pages")
 REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", 10))
 MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 NUM_WORKER_THREADS = int(os.getenv("NUM_WORKER_THREADS", 5))
-MAX_PAGES = int(os.getenv("MAX_PAGES", 100))
+MAX_PAGES = int(os.getenv("MAX_PAGES", 500))
 CRAWL_DELAY = float(os.getenv("CRAWL_DELAY", 1.0))
 
 USER_AGENT = os.getenv(
@@ -51,9 +50,17 @@ USER_AGENT = os.getenv(
 
 
 # ---------------------------------------------------------------------------
-# Seed URLs — where the crawl starts
+# Seed URLs — where the crawl starts (Updated with broad default seeds)
 # ---------------------------------------------------------------------------
-_default_seeds = "https://example.com"
+_default_seeds = (
+    "https://en.wikipedia.org/wiki/Main_Page,"
+    "https://news.ycombinator.com/,"
+    "https://www.bbc.com/news,"
+    "https://github.com/trending,"
+    "https://www.geeksforgeeks.org/,"
+    "https://stackoverflow.com/,"
+    "https://techcrunch.com/"
+)
 SEED_URLS = [
     url.strip()
     for url in os.getenv("SEED_URLS", _default_seeds).split(",")
