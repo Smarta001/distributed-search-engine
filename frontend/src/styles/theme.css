@@ -1,0 +1,78 @@
+/*
+  Flick design tokens.
+
+  Palette: deep navy (chrome/header) + a clear azure accent (links, primary
+  actions) + a sparing amber accent (trending/signature moments) — pulled
+  directly from the blueprint's navy-header, blue-toned direction.
+
+  Type: Sora for display (the wordmark and section labels), Inter for body
+  and UI text, IBM Plex Mono for URLs/scores/timestamps — small data-ish
+  details read better in a mono face than crammed into Inter.
+*/
+
+:root {
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(11, 36, 71, 0.06);
+  --shadow-md: 0 4px 16px rgba(11, 36, 71, 0.08);
+  --shadow-lg: 0 12px 32px rgba(11, 36, 71, 0.14);
+
+  --transition-fast: 140ms ease;
+  --transition-base: 220ms ease;
+}
+
+[data-theme='light'] {
+  --color-navy: #0b2447;
+  --color-navy-dark: #071831;
+  --color-accent: #2f6fed;
+  --color-accent-hover: #2559c9;
+  --color-amber: #f5a623;
+
+  --bg-page: #f4f7fb;
+  --bg-card: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-subtle: #eaf0f9;
+  --bg-input: #ffffff;
+
+  --text-primary: #10233f;
+  --text-secondary: #5b6b84;
+  --text-tertiary: #8a97ac;
+  --text-on-navy: #f4f7fb;
+  --text-on-accent: #ffffff;
+  --text-link: #2f6fed;
+  --text-visited: #6b4fbb;
+
+  --border-hairline: #e1e8f2;
+  --border-strong: #c7d3e6;
+}
+
+[data-theme='dark'] {
+  --color-navy: #071831;
+  --color-navy-dark: #050f22;
+  --color-accent: #5b8dfd;
+  --color-accent-hover: #7fa4ff;
+  --color-amber: #f5b94a;
+
+  --bg-page: #0a1930;
+  --bg-card: #101f3b;
+  --bg-raised: #142647;
+  --bg-subtle: #0d213e;
+  --bg-input: #0d213e;
+
+  --text-primary: #e7eefa;
+  --text-secondary: #93a4c2;
+  --text-tertiary: #6b7d9c;
+  --text-on-navy: #e7eefa;
+  --text-on-accent: #ffffff;
+  --text-link: #7fa4ff;
+  --text-visited: #b39ce8;
+
+  --border-hairline: #1c2e4e;
+  --border-strong: #274169;
+}
