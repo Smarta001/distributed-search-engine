@@ -1,0 +1,26 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo:hover {
+  text-decoration: none;
+}
+
+.logo__word {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: inherit;
+}
+
+.logo--md .logo__word {
+  font-size: 1.25rem;
+}
+
+.logo--lg .logo__word {
+  font-size: 3.25rem;
+}

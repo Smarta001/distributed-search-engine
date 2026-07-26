@@ -1,0 +1,29 @@
+.nav-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.nav-tabs__tab {
+  background: transparent;
+  border: none;
+  color: var(--text-on-navy);
+  opacity: 0.65;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--radius-sm);
+  transition: opacity var(--transition-fast), background var(--transition-fast);
+}
+
+.nav-tabs__tab:hover {
+  opacity: 0.95;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-tabs__tab--active {
+  opacity: 1;
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-amber);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
